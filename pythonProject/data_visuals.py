@@ -1,19 +1,22 @@
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
-import numpy as np
 import plotly.express as px
-from pandas import wide_to_long
-from streamlit import subheader
 
-# Clean prices first
+
+
+
 df = pd.read_csv(r"C:\Users\prann\Desktop\Data Visualizationswebsite\Data-Visualizationswebsite\amazon.csv")
-# Clean the price columns first
 
-# Create savings column
+
+
 st.set_page_config(layout="wide")
+st.markdown("""
+    <h1 style='text-align: center; padding-top: 10px; margin-bottom: 40px;'>
+        Amazon Data Analysis
+    </h1>
+    """, unsafe_allow_html=True)
+col1,col2,col3 = st.columns([3,3,2])
 
-col1,col2,col3 = st.columns([3,2,2])
 
 with col1 :
     df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
@@ -33,14 +36,36 @@ with col1 :
         yaxis_title="Average Rating",
         xaxis_title="Category"
     )
+
     st.plotly_chart(fig, use_container_width=True)
-    st.subheader("Data Preview")
-    st.dataframe(df[['actual_price','discounted_price','savings']].head(50))
+
 
 with col2 :
-    st.subheader("Null Values")
-    st.write(df.isnull().sum())
+
+    st.subheader("Rating vs Discounted Price")
+    df['main_category'] = df['category'].str.split('|').str[0]
+    fig = px.scatter(
+        df,
+        x="rating",
+        y="discounted_price",
+        size='rating_count',
+        color='main_category',
+        title="do higher-rated products get better discounts ?"
+    )
+    fig.update_layout(height=600, )
+    st.plotly_chart(fig, use_container_width=True)
+    df['discount_percentage']=pd.to_numeric(
+        df['discount_percentage'].astype(str).str.replace('%',''),
+        errors='coerce'
+    )
+    category_discounts = df.groupby('main_category')['discount_percentage'].mean().reset_index()
+    category_discounts = category_discounts.sort_values(by='discount_percentage',ascending=False).reset_index(drop=True)
+    st.subheader("Average Discount by Category (%)")
+    st.dataframe(category_discounts)
+
+
     df = df.dropna()
+
 
 
 
@@ -55,28 +80,45 @@ with col3:
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("My Dataset Columns")
-    st.write(df.columns)
-    st.subheader("Rating vs Discounted Price")
-    df['main_category'] = df['category'].str.split('|').str[0]
-    fig = px.scatter(
-        df,
-        x="rating",
-        y="discounted_price",
-        size='rating_count',
-        color='main_category',
-        title = "do higher-rated products get better discounts ?"
+    fig_discount = px.bar(
+        category_discounts,
+        x='main_category',
+        y='discount_percentage',
+        title="Where are the best deals? (Avg Discount %)",
+        labels={'discount_percentage': 'Average Discount (%)', 'main_category': 'Category'},
+        color='discount_percentage',
+        color_continuous_scale='Viridis'
     )
-    fig.update_layout(height=600,)
-    st.plotly_chart(fig,use_container_width=True)
 
-    st.dataframe(df['discount_percentage'])
+    st.plotly_chart(fig_discount, use_container_width=True)
+
+
+
+
 
     df['discount_percentage']=pd.to_numeric(
         df['discount_percentage'].astype(str).str.replace("%",""),
         errors='coerce'
     )
 
-    st.subheader("After dropping duplicate values")
-    st.write("Duplicate rows:", df.duplicated().sum())
+
+
+
+with st.expander ("View Raw Data processing and Schema"):
+    col4,col5,col6 = st.columns([3,2,2])
+    with col5:
+        st.subheader("My Dataset Columns")
+        st.write(df.columns)
+        st.subheader("After dropping duplicate values")
+        st.write("Duplicate rows:", df.duplicated().sum())
+        st.dataframe(df['discount_percentage'])
+    with col4:
+        st.subheader("Data Preview")
+        st.dataframe(df[['actual_price', 'discounted_price', 'savings']].head(50))
+        st.subheader("Null Values")
+        st.write(df.isnull().sum())
+
+
+
+
+
