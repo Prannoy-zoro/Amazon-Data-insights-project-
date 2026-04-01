@@ -1,0 +1,1 @@
+This is a Project based on python and its liberaries testing my abilities and the knowledge on data science 
