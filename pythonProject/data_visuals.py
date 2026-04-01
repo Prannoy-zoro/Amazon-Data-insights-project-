@@ -5,7 +5,7 @@ import plotly.express as px
 
 
 
-df = pd.read_csv(r"C:\Users\prann\Desktop\Data Visualizationswebsite\Data-Visualizationswebsite\amazon.csv")
+df = pd.read_csv("amazon.csv")
 
 
 
