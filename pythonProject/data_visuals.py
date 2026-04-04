@@ -13,12 +13,41 @@ st.markdown("""
         Amazon Data Analysis
     </h1>
     """, unsafe_allow_html=True)
-col1,col2,col3 = st.columns([3,3,2])
+
+df['discount_percentage']=pd.to_numeric(
+        df['discount_percentage'].astype(str).str.replace('%',''),
+        errors='coerce'
+    )
+df = df.dropna()
+df['discount_percentage'] = pd.to_numeric(
+    df['discount_percentage'].astype(str).str.replace("%", ""),
+        errors='coerce'
+    )
+df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+df['main_category'] = df['category'].str.split('|').str[0]
+
+category_discounts = df.groupby('main_category')['discount_percentage'].mean().reset_index()
+category_discounts = category_discounts.sort_values(by='discount_percentage',ascending=False).reset_index(drop=True)
+
+best_product = df.nlargest(1,['rating','rating_count']).iloc[0]
+worst_product = df.nsmallest(1,'rating').iloc[0]
+
+best_deal = df[df['rating']>=4.0].nlargest(1,'discount_percentage').iloc[0]
+top_customer = df['user_id'].value_counts().idxmax()
+top_category = df.loc[df['user_id'] == top_customer, 'main_category'].mode()[0]
+
+
+
+
+
+
+
+col1,col2,col3 = st.columns([3,3,3])
+
 
 
 with col1 :
-    df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
-    df['main_category'] = df['category'].str.split('|').str[0]
+
     category_rating = df.groupby('main_category')['rating'].mean().reset_index()
     fig = px.bar(
         category_rating,
@@ -36,33 +65,58 @@ with col1 :
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-
-with col2 :
-
-    st.subheader("Rating vs Discounted Price")
+    st.subheader("Rating vs Discount (%) Price")
     df['main_category'] = df['category'].str.split('|').str[0]
     fig = px.scatter(
         df,
         x="rating",
-        y="discounted_price",
+        y="discount_percentage",
         size='rating_count',
         color='main_category',
-        title="do higher-rated products get better discounts ?"
+        title="do higher-rated products get better discounts ?",
+
     )
+    fig.update_layout(yaxis_ticksuffix="%")
     fig.update_layout(height=600, )
     st.plotly_chart(fig, use_container_width=True)
-    df['discount_percentage']=pd.to_numeric(
-        df['discount_percentage'].astype(str).str.replace('%',''),
-        errors='coerce'
-    )
-    category_discounts = df.groupby('main_category')['discount_percentage'].mean().reset_index()
-    category_discounts = category_discounts.sort_values(by='discount_percentage',ascending=False).reset_index(drop=True)
-    st.subheader("Average Discount by Category (%)")
-    st.dataframe(category_discounts)
+
+with col2 :
+    with st.expander("Key Performance Indicator"):
+        avg_disc = df['discount_percentage'].mean()
+        st.metric('Top Rated Product', best_product['product_name'] + '...', f"Rating:{best_product['rating']}")
+        st.caption(best_product['product_name'])
+
+        st.metric(
+            label="🔥 Average Market Discount",
+            value=f"{avg_disc:.1f}%",
+            delta="High Savings"
+        )
+        top_cat = df.groupby('main_category')['rating'].mean().idxmax()
+        st.metric(
+            label="🏆 Top Performing Category",
+            value=top_cat,
+            delta="Customer Choice"
+        )
+        st.metric(
+            label="📦 Catalog Scale",
+            value=f"{len(df):,}",
+            delta="Total SKUs"
+        )
+
+        st.divider()
 
 
-    df = df.dropna()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -70,14 +124,22 @@ with col2 :
 with col3:
     cat_dist=df['main_category'].value_counts().reset_index()
     cat_dist.columns=['category','count']
-    fig = px.pie(
+    cat_dist = cat_dist.sort_values(by='count',ascending=True)
+    fig_cat_dist = px.bar(
         cat_dist,
-        names='category',
-        values='count',
+        x='count',
+        y='category',
+        orientation='h',
         title="Product Distribution by Category"
     )
+    fig_cat_dist.update_layout(
+        height = 600,
 
-    st.plotly_chart(fig, use_container_width=True)
+
+    )
+
+
+    st.plotly_chart(fig_cat_dist, use_container_width=True)
     fig_discount = px.bar(
         category_discounts,
         x='main_category',
@@ -94,10 +156,7 @@ with col3:
 
 
 
-    df['discount_percentage']=pd.to_numeric(
-        df['discount_percentage'].astype(str).str.replace("%",""),
-        errors='coerce'
-    )
+
 
 
 
@@ -115,6 +174,10 @@ with st.expander ("View Raw Data processing and Schema"):
         st.dataframe(df[['actual_price', 'discounted_price', 'savings']].head(50))
         st.subheader("Null Values")
         st.write(df.isnull().sum())
+
+    with col6:
+        st.subheader("Average Discount by Category (%)")
+        st.dataframe(category_discounts)
 
 
 
