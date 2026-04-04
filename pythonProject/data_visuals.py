@@ -64,6 +64,7 @@ with col1 :
         xaxis_title="Category"
     )
 
+
     st.plotly_chart(fig, use_container_width=True)
     st.subheader("Rating vs Discount (%) Price")
     df['main_category'] = df['category'].str.split('|').str[0]
@@ -76,32 +77,39 @@ with col1 :
         title="do higher-rated products get better discounts ?",
 
     )
+    st.divider()
+
     fig.update_layout(yaxis_ticksuffix="%")
     fig.update_layout(height=600, )
     st.plotly_chart(fig, use_container_width=True)
 
+    most_used_customer = df['user_name'].value_counts()
+
+
+
 with col2 :
-    with st.expander("Key Performance Indicator"):
+
         avg_disc = df['discount_percentage'].mean()
         st.metric('Top Rated Product', best_product['product_name'] + '...', f"Rating:{best_product['rating']}")
         st.caption(best_product['product_name'])
 
         st.metric(
-            label="🔥 Average Market Discount",
+            label="🔥 Average Product Discount",
             value=f"{avg_disc:.1f}%",
             delta="High Savings"
         )
         top_cat = df.groupby('main_category')['rating'].mean().idxmax()
         st.metric(
-            label="🏆 Top Performing Category",
+            label="🏆 Top Selling Category",
             value=top_cat,
             delta="Customer Choice"
         )
         st.metric(
-            label="📦 Catalog Scale",
+            label="📦 Total Products",
             value=f"{len(df):,}",
             delta="Total SKUs"
         )
+
 
         st.divider()
 
@@ -133,11 +141,10 @@ with col3:
         title="Product Distribution by Category"
     )
     fig_cat_dist.update_layout(
-        height = 600,
+        height = 510,
 
 
     )
-
 
     st.plotly_chart(fig_cat_dist, use_container_width=True)
     fig_discount = px.bar(
@@ -149,17 +156,9 @@ with col3:
         color='discount_percentage',
         color_continuous_scale='Viridis'
     )
+    st.divider()
 
     st.plotly_chart(fig_discount, use_container_width=True)
-
-
-
-
-
-
-
-
-
 
 with st.expander ("View Raw Data processing and Schema"):
     col4,col5,col6 = st.columns([3,2,2])
@@ -178,6 +177,7 @@ with st.expander ("View Raw Data processing and Schema"):
     with col6:
         st.subheader("Average Discount by Category (%)")
         st.dataframe(category_discounts)
+        st.write(most_used_customer)
 
 
 
