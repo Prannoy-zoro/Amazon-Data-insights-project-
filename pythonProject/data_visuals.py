@@ -26,6 +26,13 @@ df['discount_percentage'] = pd.to_numeric(
 df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
 df['main_category'] = df['category'].str.split('|').str[0]
 
+df['discounted_price'] = pd.to_numeric(df['discounted_price'], errors='coerce')
+df['actual_price'] = pd.to_numeric(df['actual_price'], errors='coerce')
+df['discount_percentage'] = pd.to_numeric(df['discount_percentage'], errors='coerce')
+df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+df['rating_count'] = pd.to_numeric(df['rating_count'], errors='coerce')
+
+
 category_discounts = df.groupby('main_category')['discount_percentage'].mean().reset_index()
 category_discounts = category_discounts.sort_values(by='discount_percentage',ascending=False).reset_index(drop=True)
 
@@ -47,6 +54,8 @@ col1,col2,col3 = st.columns([3,3,3])
 
 
 with col1 :
+
+
 
     category_rating = df.groupby('main_category')['rating'].mean().reset_index()
     fig = px.bar(
@@ -94,18 +103,18 @@ with col2 :
         st.caption(best_product['product_name'])
 
         st.metric(
-            label="🔥 Average Product Discount",
+            label=" Average Product Discount",
             value=f"{avg_disc:.1f}%",
             delta="High Savings"
         )
         top_cat = df.groupby('main_category')['rating'].mean().idxmax()
         st.metric(
-            label="🏆 Top Selling Category",
+            label=" Top Selling Category",
             value=top_cat,
             delta="Customer Choice"
         )
         st.metric(
-            label="📦 Total Products",
+            label=" Total Products",
             value=f"{len(df):,}",
             delta="Total SKUs"
         )
